@@ -1,0 +1,42 @@
+[project]
+name = "agentic-development-template"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "KaFaiLi", email = "120011363+KaFaiLi@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+agentic-development-template = "agentic_development_template:main"
+
+[build-system]
+requires = ["uv_build>=0.13.8,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
+
+# Custom "team rules": ban APIs with a message that says what to use instead.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"os.system".msg = "Use subprocess.run with a list of args."
+
+# Migration ratchet: files listed here may still use banned APIs.
+# This list may only shrink. Never add to it.
+[tool.ruff.lint.per-file-ignores]
+# "src/agentic_development_template/legacy.py" = ["TID251"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
