@@ -43,10 +43,6 @@
   That list may only shrink. Never add a file to it.
 - When you touch a legacy file, migrate it and remove its entry.
 - Do not copy patterns from legacy files into new code.
-- PR CI compares both Ruff per-file exception tables against the PR base and rejects
-  added patterns or broader rule exemptions. Reproduce on committed changes with
-  `uv run --locked python scripts/check_migration_exceptions.py --base-ref origin/main`.
-  This guard does not enforce other Ruff settings or detect new inline `noqa` comments.
 
 ## Safety
 - Do not read or modify .env files or secrets.

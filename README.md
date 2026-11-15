@@ -36,7 +36,6 @@ Hello from agentic-development-template!
 AGENTS.md                               Instructions for coding agents
 pyproject.toml                          Package metadata and tool configuration
 uv.lock                                 Resolved dependency versions
-scripts/check_migration_exceptions.py    PR migration-exception guard
 src/agentic_development_template/
     __init__.py                         Sample main() function
     __main__.py                         Entry point for python -m
@@ -118,28 +117,14 @@ Use subprocess.run with a list of args.
 
 Use the banned-API configuration in `pyproject.toml` to turn repeated review
 feedback into checks. The migration exception list starts empty and may only
-shrink; do not add exceptions to bypass a failure. PR CI compares both
-`per-file-ignores` and `extend-per-file-ignores` against the PR base. Existing
-patterns may lose rules or narrow a prefix (for example, `TID` to `TID251`), but
-new patterns and broader rule exemptions fail. Pattern changes are conservatively
-treated as new exceptions, even if a renamed glob might be narrower.
-
-Run the guard locally after committing changes:
-
-```sh
-uv run --locked python scripts/check_migration_exceptions.py --base-ref origin/main
-```
-
-The base revision must exist locally and contain `pyproject.toml`; fetch it first
-if needed. This guard controls per-file exception growth only. Changes to global
-rule selection, inline `noqa` comments and the guard itself still need review.
+shrink; do not add exceptions to bypass a failure. This policy is enforced through
+code review.
 
 ## Continuous integration
 
 GitHub Actions runs on every pull request and push to `main`. It installs uv,
 runs `uv sync --locked`, validates the hook configuration, then runs the same
-check-only lint, formatting and test commands shown above. For PRs, it also checks
-the migration-exception list against the PR base. A stale lockfile or failed check
+check-only lint, formatting and test commands shown above. A stale lockfile or failed check
 fails the job, including when hooks were bypassed locally. Configure branch
 protection to require the `check` job to enforce this before merging; adding a
 workflow alone does not configure remote branch protection.
