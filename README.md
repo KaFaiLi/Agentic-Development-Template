@@ -2,8 +2,8 @@
 
 A lightweight Python starting point for working with coding agents. It uses uv for
 package management, Ruff for linting and formatting, and pytest for testing.
-There are no runtime dependencies; the only direct development dependencies are
-Ruff and pytest. No hooks, helper scripts, or containers are required.
+There are no runtime dependencies. Development tools are Ruff, pytest and pre-commit.
+Fast local hooks complement full-repository CI checks; no containers are required.
 
 ## Quick start
 
@@ -11,7 +11,8 @@ Install uv and make sure `uv --version` works, then run these commands from the
 repository root:
 
 ```sh
-uv sync
+uv sync --locked
+uv run --locked pre-commit install
 uv run python -m agentic_development_template
 ```
 
@@ -29,11 +30,13 @@ Hello from agentic-development-template!
 
 ```text
 .github/workflows/ci.yml                 GitHub Actions checks
+.pre-commit-config.yaml                 Staged-file lint and formatting hooks
 .gitignore                              Excludes environments and caches
 .python-version                         Development Python version
 AGENTS.md                               Instructions for coding agents
 pyproject.toml                          Package metadata and tool configuration
 uv.lock                                 Resolved dependency versions
+scripts/check_migration_exceptions.py    PR migration-exception guard
 src/agentic_development_template/
     __init__.py                         Sample main() function
     __main__.py                         Entry point for python -m
@@ -47,7 +50,7 @@ tests/
 Run the full check before considering a change complete:
 
 ```sh
-uv run ruff check . && uv run ruff format --check . && uv run pytest
+uv run --locked ruff check . && uv run --locked ruff format --check . && uv run --locked pytest
 ```
 
 In shells without `&&` support, run each command separately and stop if one fails.
@@ -55,14 +58,14 @@ In shells without `&&` support, run each command separately and stop if one fail
 Apply lint fixes and formatting:
 
 ```sh
-uv run ruff check --fix .
-uv run ruff format .
+uv run --locked ruff check --fix .
+uv run --locked ruff format .
 ```
 
 Run only the tests:
 
 ```sh
-uv run pytest
+uv run --locked pytest
 ```
 
 Manage dependencies with uv, never pip or manual dependency-list edits:
@@ -78,6 +81,29 @@ and `uv.lock` changes together.
 
 ## Agent workflow and team rules
 
+### Local commit hooks
+
+Install hooks once in each checkout with `uv run --locked pre-commit install`.
+After dependency updates, run `uv sync --locked` again. The hooks run Ruff lint
+fixes followed by formatting on staged Python files. They invoke the project tools
+through uv, so the hook and CI share the Ruff version in `uv.lock` and configuration
+in `pyproject.toml`; there is no second Ruff version to maintain.
+
+If a hook changes files, the commit stops: inspect the changes, stage them and
+retry. Violations Ruff cannot fix also block the commit and need a code change.
+Only Ruff's normal safe lint fixes are enabled; unsafe fixes are not requested.
+Run hooks manually across tracked Python files with:
+
+```sh
+uv run --locked pre-commit run --all-files
+```
+
+Hooks require uv on PATH and an installed project development environment. They
+do not run pytest, and do not replace full verification before completion. Local
+hooks can be absent or bypassed, so CI independently checks the whole repository.
+
+### Development workflow
+
 Read `AGENTS.md` before making changes. It asks agents to propose a plan and wait
 for approval for non-trivial work, keep changes focused, test behavior changes,
 and run the full check before reporting completion.
@@ -92,13 +118,31 @@ Use subprocess.run with a list of args.
 
 Use the banned-API configuration in `pyproject.toml` to turn repeated review
 feedback into checks. The migration exception list starts empty and may only
-shrink; do not add exceptions to bypass a failure.
+shrink; do not add exceptions to bypass a failure. PR CI compares both
+`per-file-ignores` and `extend-per-file-ignores` against the PR base. Existing
+patterns may lose rules or narrow a prefix (for example, `TID` to `TID251`), but
+new patterns and broader rule exemptions fail. Pattern changes are conservatively
+treated as new exceptions, even if a renamed glob might be narrower.
+
+Run the guard locally after committing changes:
+
+```sh
+uv run --locked python scripts/check_migration_exceptions.py --base-ref origin/main
+```
+
+The base revision must exist locally and contain `pyproject.toml`; fetch it first
+if needed. This guard controls per-file exception growth only. Changes to global
+rule selection, inline `noqa` comments and the guard itself still need review.
 
 ## Continuous integration
 
 GitHub Actions runs on every pull request and push to `main`. It installs uv,
-runs `uv sync --locked`, then runs the same lint, formatting, and test checks
-shown above. A stale lockfile or failed check fails the job.
+runs `uv sync --locked`, validates the hook configuration, then runs the same
+check-only lint, formatting and test commands shown above. For PRs, it also checks
+the migration-exception list against the PR base. A stale lockfile or failed check
+fails the job, including when hooks were bypassed locally. Configure branch
+protection to require the `check` job to enforce this before merging; adding a
+workflow alone does not configure remote branch protection.
 
 ## Adapt it for your project
 
