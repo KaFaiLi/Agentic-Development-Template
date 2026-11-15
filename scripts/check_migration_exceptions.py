@@ -38,7 +38,8 @@ def main() -> int:
         for pattern, rules in head.items()
         for rule in rules
         if not any(
-            previous == "ALL" or rule.startswith(previous) for previous in base.get(pattern, set())
+            previous == "ALL" or (rule != "ALL" and rule.startswith(previous))
+            for previous in base.get(pattern, set())
         )
     ]
     if added:
