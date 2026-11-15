@@ -1,25 +1,30 @@
 # AGENTS.md
 
 ## Commands
-- Install: `uv sync --locked`, then `uv run --locked pre-commit install` in each checkout.
-- Check (run before reporting any task as done):
-  `uv run --locked ruff check . && uv run --locked ruff format --check . && uv run --locked pytest`
-- Auto-fix: `uv run --locked ruff check --fix . && uv run --locked ruff format .`
-- Hooks: `uv run --locked pre-commit run --all-files`.
-  Hooks fix lint and formatting on staged Python files using the locked Ruff version.
-  Inspect automatic changes, stage them, and retry the commit. Do not bypass hooks
-  merely to make a commit succeed. Hooks supplement the full check; CI stays check-only.
-- Run the app: `uv run python -m agentic_development_template`
-- Add dependencies: `uv add <pkg>` (runtime) or `uv add --dev <pkg>` (dev).
-  Never use pip or edit dependency lists by hand. Say why before adding any dependency.
+- Setup: `uv sync --locked && uv run --locked pre-commit install`
+- Verify before completion:
+  `uv run --locked pre-commit run --all-files && uv run --locked pytest`
+- Run: `uv run --locked python -m agentic_development_template`
+- Dependencies: `uv add <pkg>` or `uv add --dev <pkg>`.
+  Explain why first; never use pip or edit dependency lists manually.
+
+Review any automatic fixes and rerun verification until it passes.
+Do not bypass failing hooks.
 
 ## Workflow
 1. Plan first for any non-trivial change (touches more than 2 files, adds behavior,
    refactors, or migrates). Present: goal, files to change, tests to add, risks.
    Wait for approval before writing code. Small, obvious fixes can skip this.
-2. Implement in small steps. Keep changes focused; do not refactor unrelated code.
-3. Verify: run the check command. Never say "done" while it fails.
-   Report the actual results, including failures.
+2. Implement in small steps. Keep changes focused.
+3. Verify: run the check command. Report the actual results, including failures.
+
+## Review expectations
+- Use domain-specific names: snake_case for functions/variables, PascalCase for
+  classes, and UPPER_SNAKE_CASE for constants. Do not shadow Python built-ins.
+- Reuse existing helpers; avoid abstractions or configuration for hypothetical needs.
+- Test observable behavior and failure cases, not implementation details.
+- Remove debugging calls and obsolete lint suppressions. Any necessary suppression
+  must name the specific rule and explain why; never use it just to pass checks.
 
 ## Testing
 - tests/unit: logic tests. tests/e2e: run the real app in a subprocess.
@@ -43,11 +48,6 @@
   That list may only shrink. Never add a file to it.
 - When you touch a legacy file, migrate it and remove its entry.
 - Do not copy patterns from legacy files into new code.
-
-## Safety
-- Do not read or modify .env files or secrets.
-- Ask before: force-pushing, deleting files recursively, or running commands that
-  execute arbitrary code (`find -exec`, bulk `sed -i`, `curl | sh`).
 
 ## Parallel work
 - One session per git worktree: `git worktree add ../wt-<name> -b <name>`

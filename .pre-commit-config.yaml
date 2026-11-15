@@ -1,6 +1,14 @@
 minimum_pre_commit_version: "4.4.0"
 
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-case-conflict
+
   - repo: local
     hooks:
       - id: ruff-check
@@ -15,4 +23,12 @@ repos:
         entry: uv run --locked ruff format
         language: unsupported
         types_or: [python, pyi]
+        stages: [pre-commit]
+
+      - id: ty-check
+        name: Python type check
+        entry: uv run --locked ty check
+        language: unsupported
+        pass_filenames: false
+        always_run: true
         stages: [pre-commit]

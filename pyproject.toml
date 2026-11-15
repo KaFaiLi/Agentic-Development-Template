@@ -21,13 +21,14 @@ dev = [
     "pre-commit>=4.4.0",
     "pytest>=9.2.0",
     "ruff>=0.17.5",
+    "ty>=0.0.104",
 ]
 
 [tool.ruff]
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
+select = ["E", "F", "I", "UP", "B", "SIM", "TID", "N", "A", "T100", "RUF100", "PGH004"]
 
 # Custom "team rules": ban APIs with a message that says what to use instead.
 [tool.ruff.lint.flake8-tidy-imports.banned-api]

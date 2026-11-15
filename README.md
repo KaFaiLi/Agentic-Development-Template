@@ -2,7 +2,7 @@
 
 A lightweight Python starting point for working with coding agents. It uses uv for
 package management, Ruff for linting and formatting, and pytest for testing.
-There are no runtime dependencies. Development tools are Ruff, pytest and pre-commit.
+There are no runtime dependencies. Development tools are Ruff, ty, pytest and pre-commit.
 Fast local hooks complement full-repository CI checks; no containers are required.
 
 ## Quick start
@@ -30,7 +30,7 @@ Hello from agentic-development-template!
 
 ```text
 .github/workflows/ci.yml                 GitHub Actions checks
-.pre-commit-config.yaml                 Staged-file lint and formatting hooks
+.pre-commit-config.yaml                 Lint, formatting, type and file checks
 .gitignore                              Excludes environments and caches
 .python-version                         Development Python version
 AGENTS.md                               Instructions for coding agents
@@ -50,6 +50,7 @@ Run the full check before considering a change complete:
 
 ```sh
 uv run --locked ruff check . && uv run --locked ruff format --check . && uv run --locked pytest
+uv run --locked ty check
 ```
 
 In shells without `&&` support, run each command separately and stop if one fails.
@@ -88,10 +89,19 @@ fixes followed by formatting on staged Python files. They invoke the project too
 through uv, so the hook and CI share the Ruff version in `uv.lock` and configuration
 in `pyproject.toml`; there is no second Ruff version to maintain.
 
+Hooks also validate YAML, JSON and TOML syntax and reject filename case conflicts
+that cause problems on case-insensitive filesystems. These maintained hooks are
+pinned in `.pre-commit-config.yaml`; their environment is installed on first use.
+JSON checks expect standard JSON, not JSON with comments.
+
+The `ty` hook checks the whole project on every commit, including configuration-only
+changes. It uses the version in `uv.lock` and catches type errors across files.
+Run it directly with `uv run --locked ty check`. It does not replace behavior tests.
+
 If a hook changes files, the commit stops: inspect the changes, stage them and
 retry. Violations Ruff cannot fix also block the commit and need a code change.
 Only Ruff's normal safe lint fixes are enabled; unsafe fixes are not requested.
-Run hooks manually across tracked Python files with:
+Run hooks manually across all tracked files with:
 
 ```sh
 uv run --locked pre-commit run --all-files
@@ -124,7 +134,9 @@ code review.
 
 GitHub Actions runs on every pull request and push to `main`. It installs uv,
 runs `uv sync --locked`, validates the hook configuration, then runs the same
-check-only lint, formatting and test commands shown above. A stale lockfile or failed check
+file-validation hooks and check-only lint, formatting, type and test commands shown above.
+CI skips the auto-fixing Ruff hooks and runs Ruff's check-only commands instead.
+A stale lockfile or failed check
 fails the job, including when hooks were bypassed locally. Configure branch
 protection to require the `check` job to enforce this before merging; adding a
 workflow alone does not configure remote branch protection.
